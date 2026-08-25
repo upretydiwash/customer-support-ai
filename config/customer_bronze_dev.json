@@ -1,0 +1,13 @@
+{
+  "workspace":"dev",
+  "catalog":"development",
+  "source_format":"csv",
+  "schema":"bronze", 
+  "Volume":"/Volumes/development/bronze/support-ai-volume-dev/raw/customers/",
+  "table":"cutomer_bronze",
+  "infer_schema" : "true",
+  "csv_options":{
+  "header":"true",
+  "delimeter":","
+}
+}
