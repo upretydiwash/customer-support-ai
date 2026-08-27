@@ -1,0 +1,13 @@
+{
+  "workspace":"dev",
+  "catalog":"development",
+  "source_format":"csv",
+  "schema":"bronze", 
+  "volume":"/Volumes/development/bronze/support-ai-volume-dev/raw/ticket_events/",
+  "table":"ticket_events_bronze",
+  "infer_schema" : "true",
+  "csv_options":{
+  "header":"true",
+  "delimeter":","
+}
+}
