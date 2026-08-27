@@ -3,8 +3,8 @@
   "catalog":"development",
   "source_format":"csv",
   "schema":"bronze", 
-  "volume":"/Volumes/development/bronze/support-ai-volume-dev/raw/customers/",
-  "table":"cutomer_bronze",
+  "volume":"/Volumes/development/bronze/support-ai-volume-dev/raw/products/",
+  "table":"products_bronze",
   "infer_schema" : "true",
   "csv_options":{
   "header":"true",

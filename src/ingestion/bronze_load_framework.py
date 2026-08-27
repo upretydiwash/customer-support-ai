@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import current_timestamp, input_file_name
+from pyspark.sql.functions import current_timestamp, col
 
 
 
@@ -13,11 +13,11 @@ class BronzeAutoLoaderFramework:
       self.schema = table_metadata.get('schema')
       self.infer_schema = table_metadata.get('infer_schema')
       self.source_format = table_metadata.get('source_format')
-      self.csv_options = table_metadata.get('cvs_options',{})
+      self.csv_options = table_metadata.get('csv_options',{})
       
       self.checkpoint = f'{self.volume}_checkpoints/'
       self.schema_path = f'{self.volume}_schemas/'
-      self.source = f'{self.catalog}.{self.schema}.{self.table}'
+      self.target_table = f'{self.catalog}.{self.schema}.{self.table}'
 
 
   def run_ingetion(self):
@@ -27,8 +27,8 @@ class BronzeAutoLoaderFramework:
       try:
         reader = (
         self.spark.readStream.format('cloudFiles')
-        .option('cloudFiles.format', self.source_format))
-        .option('cloudFiles.schemaLocation', self.schema_path)
+        .option('cloudFiles.format', self.source_format)
+        .option('cloudFiles.schemaLocation', self.schema_path))
 
         if self.source_format.lower() == 'csv':
             reader = reader.option('cloudFiles.inferColumnTypes', self.infer_schema)
@@ -38,13 +38,21 @@ class BronzeAutoLoaderFramework:
         raw_df = reader.load(self.volume)
 
         bronze_df = raw_df.withColumn('_ingested_at', current_timestamp())\
-            .withColumn('_file', input_file_name())  
+            .withColumn('_file', col('_metadata.file_path'))
+           
 
 
-      query = (
+        query = (
           bronze_df.writeStream
           .format('delta')
           .option('checkpointLocation', self.checkpoint)
-          .trigger(once=True
-      )
+          .outputMode('append')
+          .trigger(availableNow=True)
+          .toTable(self.target_table)
+        )
+        query.awaitTermination()
+      except Exception as e:
+          print(f'Error: {e}')
+          raise e 
+
         

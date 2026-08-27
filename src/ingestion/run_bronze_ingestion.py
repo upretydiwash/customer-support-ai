@@ -1,5 +1,6 @@
 import json
 import sys
+from bronze_load_framework import BronzeAutoLoaderFramework
 
 def main():
     if len(sys.argv) != 2:
@@ -8,6 +9,9 @@ def main():
     config_file = sys.argv[1]
     with open(config_file) as f:
         config = json.load(f)
+
+    bronze_framework = BronzeAutoLoaderFramework(config)
+    bronze_framework.run_ingetion()    
         
 
 
