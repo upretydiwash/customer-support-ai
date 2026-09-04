@@ -29,13 +29,21 @@ class DataQualityPipeline:
         @dlt.table(name=quarantine_target)
         def process_quarantine():
             df = dlt.read(source)
+
+            #Mapping each row to a case statement: if rule evaluated to FALSE/NULL, return rule_name
+            rule_checks =[ 
+                           F.when(~F.expr(cond) | F.expr(cond).isNull(), F.lit(rule_name)).otherwise(None) 
+                           for rule_name, cond in rules_dict.items()
+            ]
+           
+           #Write all the failed records to an array and remove nulls
+
+            df_flagged = df.withColumn('failed_rules', F.array_remove(F.array(*rule_checks), None))
+
             
-            # Combine all inverse rules into a single OR filter condition
-            # If a row fails Rule A OR Rule B, it goes to Quarantine
-            failed_conditions = [f"NOT ({cond})" for cond in rules_dict.values()]
-            combined_failure_filter = " OR ".join(failed_conditions)
-            
+
             return (
-                df.filter(combined_failure_filter)
-                .withColumn("quarantined_at", F.current_timestamp())
+                df_flagged
+                .filter(F.size(F.col('failed_rules')) > 0)
+                .withColumn('quarantined_at', F.current_timestamp())
             )
