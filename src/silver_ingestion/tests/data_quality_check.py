@@ -31,19 +31,26 @@ class DataQualityPipeline:
             df = dlt.read(source)
 
             #Mapping each row to a case statement: if rule evaluated to FALSE/NULL, return rule_name
-            rule_checks =[ 
-                           F.when(~F.expr(cond) | F.expr(cond).isNull(), F.lit(rule_name)).otherwise(None) 
-                           for rule_name, cond in rules_dict.items()
-            ]
+            rule_checks = [ 
+                F.when(~F.expr(cond) | F.expr(cond).isNull(), F.lit(rule_name)).otherwise(None) 
+                for rule_name, cond in rules_dict.items()
+                ]
            
            #Write all the failed records to an array and remove nulls
 
-            df_flagged = df.withColumn('failed_rules', F.array_remove(F.array(*rule_checks), None))
+            df_flagged = df.withColumns({
+            'failed_rules': F.filter(F.array(*rule_checks), lambda x: x.isNotNull()),
+                'quarantined_at': F.current_timestamp()
+                } )
 
             
 
-            return (
-                df_flagged
-                .filter(F.size(F.col('failed_rules')) > 0)
-                .withColumn('quarantined_at', F.current_timestamp())
-            )
+            df_quarantine = df_flagged.filter(F.size(F.col('failed_rules')) > 0)
+
+            # Write to table
+            df_quarantine.write.mode('append').saveAsTable(quarantine_target)
+            return df_quarantine
+        
+        return process_clean, process_quarantine
+
+
