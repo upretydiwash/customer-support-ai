@@ -41,7 +41,7 @@ class Transformations:
         return df.withColumns({c+'_date': F.col(c).cast(DateType()) for c in columns})
     
 
-    def _convert_to_type(self, df, column, type):
+    def convert_to_type(self, df, column, type):
         return df.withColumn(column, F.col(column).cast(type))
     
 

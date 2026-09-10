@@ -12,5 +12,7 @@
   "rules" : {
     "valid_id" : "customer_id IS NOT NULL "
   },
-  "quarantine_table" : "quarantine_table"
+  "quarantine_table" : "quarantine_table",
+  "clean_table_schema": "silver",
+  "clean_table": "customer_silver"
 }
