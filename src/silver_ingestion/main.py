@@ -1,30 +1,23 @@
 from reader.bronze_table_reader import BronzeTableReader
 from tests.data_quality_check import DataQualityPipeline
-from trasformers.transformations import Transformations
+from transformers.transformations import Transformations
 from writer.silver_writer import SilverTableWriter
 import json
-from pyspark.sql import SparkSession
-from pyspark.dbutils import DBUtils
+from pyspark.sql import SparkSession, functions as F
+import sys
 
 
 
-#To get the DBUtils object
-def get_dbutils(spark:SparkSession):
-    try:
-        return DBUtils(spark)
-    
-    except exception as e:
-        print("Exception: ", e)
-
-#creating a sparksession and returning the dbutils object which will have json file path 
-def run_spark_session():
-    spark = SparkSession.builder.getOrCreate()
-    dbutils = get_dbutils(spark)
-    return dbutils.widget.get("json_file_path")
 
 #reading the json file 
-def read_json_file(file):
+def run_spark_session():
+    spark = SparkSession.builder.appName("Spark Data Engineering").getOrCreate()
+    return spark 
+
+def read_json_file():
     try:
+        file = sys.argv[1]
+        print(f"Reading config file : {file}")
         with open(file) as f:
             return json.load(f)
     except Exception as e:
@@ -32,12 +25,12 @@ def read_json_file(file):
         return None
 
 if __name__ == "__main__":
-    dbutils = run_spark_session()
-    config = read_json_file(dbutils)
+    spark = run_spark_session()
+    config = read_json_file()
     workspace = config.get("workspace",'dev')
     catalog = config.get("catalog",'development')
     source_schema = config.get("source_schema",'bronze')
-    source_table = congif.get("source_table")
+    source_table = config.get("source_table")
     key_column = config.get("key_column")
     remove_dups_flag = config.get("remove_dups_flag",'N')
     remove_nulls_flag = config.get("remove_nulls_flag",'N')
@@ -57,50 +50,48 @@ if __name__ == "__main__":
     
     #concating the source and the target tables with their proper names
     source_data_table = f'{catalog}.{source_schema}.{source_table}'
-    target_quarantine_table = f'{catalog}.{source_schema}.{quarantine_table}
+    target_quarantine_table = f'{catalog}.{source_schema}.{quarantine_table}'
     target_clean_table = f'{catalog}.{clean_table_schema}.{clean_table}'
 
     #now reading the source table from the config
     try:
+        spark.sql(f'CREATE TABLE IF NOT EXISTS {target_clean_table}')
         #read bronze table
-        df = BronzeTableReader().read(source_data_table)
+        bronze_reader = BronzeTableReader(spark)
+        df = bronze_reader.read(source_data_table)
         #run tests on the extracted data
         try:
             print(f"Running data quality checks for table : {source_data_table}")
-            DataCheck = DataQualityPipeline(source_data_table,target_quarantine_table,rules)
-            df_clean, df_quarantine = DataCheck.build()
-            df_clean = df_clean()
-            df_quarantine = df_quarantine()
+            DataCheck = DataQualityPipeline(df,target_quarantine_table,rules)
+            df_clean, df_quarantine = DataCheck.data_quality()
             print(f'{df_clean.count()} passed the data checks!')
             print(f'{df_quarantine.count()} failed the data checks!')
         except Exception as e:
-            print(f"Exception: {e}")
-            print(f"Data quality checks failed for table : {source_data_table}"
+            raise Exception(f"Data quality checks failed for table : {source_data_table}: {e}") from e
+
 
         #transforming the data
         #removing dups
         try:
             if remove_dups_flag == 'Y':
-                df_remove_dups = Transformations.remove_duplicates(df_clean,key_column)
-                print(f'Removed {df_clean.count() - df_remove_dups.count()} duplicates! from {source_data_table}')
+                df_removed_dups = Transformations.remove_duplicates(df_clean,key_column)
+                print(f'Removed {df_clean.count() - df_removed_dups.count()} duplicates! from {source_data_table}')
             else:
                 df_removed_dups = df_clean
 
         except Exception as e:
-            print(f"Exception: {e}")
-            print(f"Data deduplication failed for table : {source_data_table}")
-       #removing nulls
+            raise Exception(f"Data deduplication failed for table : {source_data_table} : {e}") from e 
+        #removing nulls
         try:
             if remove_nulls_flag == 'Y' and remove_nulls_column:
-                df_remove_nulls = Transformations.remove_nulls(df_removed_dups, remove_nulls_column)
-                print(f'Removed {df_removed_dups.count() - df_remove_nulls.count()} nulls! from {source_data_table}')
+                df_removed_nulls = Transformations.remove_nulls(df_removed_dups, remove_nulls_column)
+                print(f'Removed {df_removed_dups.count() - df_removed_nulls.count()} nulls! from {source_data_table}')
 
             else:
                 df_removed_nulls = df_removed_dups
 
         except Exception as e:
-            print(f"Exception: {e}")
-            print(f"Data null removal failed for table : {source_data_table}"
+            raise Exception(f"Data null removal failed for table : {source_data_table} : {e}") from e
 
         #trimming columns
         try:
@@ -112,8 +103,7 @@ if __name__ == "__main__":
                 df_trimmed = df_removed_nulls
 
         except Exception as e:
-            print(f"Exception: {e}")
-            print(f"Data trimming failed for table : {source_data_table}")
+            raise Exception(f"Data trimming failed for table : {source_data_table} : {e}") from e
 
         #noramlizing ts
         try:
@@ -125,8 +115,7 @@ if __name__ == "__main__":
                 df_normalized_ts = df_trimmed
 
         except Exception as e:
-            print(f"Exception: {e}")
-            print(f"Data ts normalization failed for table : {source_data_table}")
+            raise Exception(f"Data ts normalization failed for table : {source_data_table}: {e}") from e
 
         #converting columns
         try:
@@ -138,8 +127,7 @@ if __name__ == "__main__":
                 df_converted = df_normalized_ts
 
         except Exception as e:
-            print(f"Exception: {e}")
-            print(f"Data type conversion failed for table : {source_data_table}")
+            raise Exception(f"Data type conversion failed for table : {source_data_table}: {e}") from e
 
         #capitalize columns
         try:
@@ -151,21 +139,22 @@ if __name__ == "__main__":
                 df_capitalized = df_converted
 
         except Exception as e:
-            print(f"Exception: {e}")
-            print(f"Data capitalization failed for table : {source_data_table}")
+            raise Exception(f"Data capitalization failed for table : {source_data_table}: {e}") from e
 
         #writing the data to the clean table
         try:
-            SilverTableWriter.write(df_capitalized, target_clean_table)
+            exception_column = ['_rescued_data','_ingested_at','_file','failed_rules','quarantined_at']
+            df_capitalized = df_capitalized.drop(*exception_column).withColumn('ingested_ts', F.current_timestamp())
+            SilverTableWriter.write(df_capitalized,target_clean_table)
             print(f"Data written to table : {target_clean_table}")
 
         except Exception as e:
-            print(f"Exception: {e}")
-            print(f"Data write failed for table : {target_clean_table}")
+            raise Exception(f"Data write failed for table : {target_clean_table}: {e}") from e
 
         print(f'Silver pipeline process completed for {target_clean_table}')
             
-        
+    except Exception as e:
+        raise Exception(f"Data read failed for table : {source_data_table}: {e}") from e
             
 
 
