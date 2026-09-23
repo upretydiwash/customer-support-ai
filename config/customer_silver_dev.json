@@ -2,7 +2,7 @@
   "workspace": "dev",
   "catalog":"development",
   "source_schema": "bronze",
-  "source_table": "cutomer_bronze",
+  "source_table": "customer_bronze",
   "key_column": "customer_id",
   "remove_dups_flag": "Y",
   "remove_nulls_flag": "Y",
@@ -10,7 +10,8 @@
   "trim_columns_flag":"Y",
   "trim_columns": ["customer_name","province"],
   "rules" : {
-    "valid_id" : "customer_id IS NOT NULL "
+    "valid_id" : "customer_id IS NOT NULL ",
+    "valid_age" : "age > 24"
   },
   "quarantine_table" : "quarantine_table",
   "clean_table_schema": "silver",

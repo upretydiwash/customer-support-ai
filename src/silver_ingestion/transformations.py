@@ -25,27 +25,27 @@ class Transformations:
 
 
     # Remove duplicates
-    def remove_duplicates(self, df, primary_key):
+    def remove_duplicates( df, primary_key):
         df = df.dropDuplicates([primary_key])
         return df
     
     # Remove nulls
-    def remove_nulls(self, df, columns: list):
+    def remove_nulls( df, columns: list):
         return df.dropna(subset=columns)
 
-    def trim_strings(self, df, columns: list):
+    def trim_strings(df, columns: list):
         return df.withColumns({c: F.trim(F.col(c)) for c in columns})
 
 
-    def normalize_ts(self, df, columns: list):
+    def normalize_ts( df, columns: list):
         return df.withColumns({c+'_date': F.col(c).cast(DateType()) for c in columns})
     
 
-    def convert_to_type(self, df, column, type):
+    def convert_to_type( df, column, type):
         return df.withColumn(column, F.col(column).cast(type))
     
 
-    def capitalize(self, df, columns: list):
+    def capitalize(df, columns: list):
         return df.withColumns({c: F.initcap(F.col(c)) for c in columns})
 
 
