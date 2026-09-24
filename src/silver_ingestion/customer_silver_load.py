@@ -47,10 +47,13 @@ if __name__ == "__main__":
     convert_columns = config.get("convert_columns",[])
     capitalize_flag = config.get("capitalize_flag",'N')
     capitalize_columns = config.get("capitalize_columns",[])
+    silver_writer_mode = config.get("silver_writer_mode")
+    merge_columns = config.get("merge_columns")
     #concating source and targets with proper name 
     source_data_table =  f'{catalog}.{source_schema}.{source_table}'
     target_quarantine_table = f'{catalog}.{source_schema}.{quarantine_table}'
     target_clean_table = f'{catalog}.{clean_table_schema}.{clean_table}'
+    
 
     #reading source table:
     try:
@@ -140,10 +143,11 @@ if __name__ == "__main__":
                 try:
                     exception_column =  ['_rescued_data','_ingested_at','_file','failed_rules','quarantined_at']
                     df_capitalized = df_capitalized.drop(*exception_column).withColumn('ingested_ts', F.current_timestamp())
-                    df_capitalized.createOrReplaceTempView(temp_bronze_data)
+                    df_capitalized.createOrReplaceTempView('temp_bronze_data')
+                    """
                     merge_statement = f'''
                     MERGE INTO {target_clean_table} t
-                    USING {temp_bronze_data} s
+                    USING temp_bronze_data s
                     ON t.customer_id = s.customer_id
                     WHEN MATCHED THEN
                     UPDATE SET *
@@ -151,17 +155,19 @@ if __name__ == "__main__":
                     THEN INSERT *
                     '''
                     merge_results_df = spark.sql(merge_statement)
-                    metrics = merge_result_df.collect()[0]
+                    """
+                    merge_results_df = SilverTableWriter(spark).incremental_write('temp_bronze_data', target_clean_table, merge_columns)
+                    metrics = merge_results_df.collect()[0]
 
                     print('MERGE statement executed successfully!')
-                    print(f'Rows inserted: {metrics.get('num_affected_rows', 'N/A')}')
-                    print(f'Rows updated: {metrics.get('num_updated_rows', 'N/A')} ')
+                    print(f'Rows inserted: {getattr(metrics, 'num_affected_rows', 'N/A')}')
+                    print(f'Rows updated: {getattr(metrics, 'num_updated_rows', 'N/A')} ')
 
-                except:
+                except Exception as e:
                     raise Exception(f'Error writing to silver table: {e}')
                     
                 finally:
-                    spark.catalog.dropTempViewIfExists(temp_bronze_data)
+                    spark.catalog.dropTempView('temp_bronze_data')
             
             else:
                 print(f'No new data found for {source_data_table}')   
