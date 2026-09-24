@@ -15,5 +15,7 @@
   },
   "quarantine_table" : "quarantine_table",
   "clean_table_schema": "silver",
-  "clean_table": "customer_silver"
+  "clean_table": "customer_silver",
+  "silver_writer_mode": "incremental",
+  "merge_columns" : ["customer_id"]
 }
