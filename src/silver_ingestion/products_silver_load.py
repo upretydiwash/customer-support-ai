@@ -9,7 +9,7 @@ import json
 
 #run spark session
 def run_spark_session():
-    spark = SparkSession.builder.appName("customer_silver").getOrCreate()
+    spark = SparkSession.builder.appName("products_silver").getOrCreate()
     return spark
 
 # read config file 
