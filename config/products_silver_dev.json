@@ -1,0 +1,21 @@
+{
+  "workspace": "dev",
+  "catalog":"development",
+  "source_schema": "bronze",
+  "source_table": "products_bronze",
+  "key_column": "product_id",
+  "remove_dups_flag": "Y",
+  "remove_nulls_flag": "Y",
+  "remove_nulls_column" : ["product_id"],
+  "trim_columns_flag":"Y",
+  "trim_columns": ["product_name","product_category"],
+  "rules" : {
+    "valid_id" : "product_id IS NOT NULL ",
+    "valid_product" : "product_name IS NOT NULL "
+  },
+  "quarantine_table" : "quarantine_table_products",
+  "clean_table_schema": "silver",
+  "clean_table": "products_silver",
+  "silver_writer_mode": "incremental",
+  "merge_columns" : ["product_id"]
+}
