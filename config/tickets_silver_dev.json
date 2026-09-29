@@ -1,0 +1,21 @@
+{
+  "workspace": "dev",
+  "catalog":"development",
+  "source_schema": "bronze",
+  "source_table": "tickets_bronze",
+  "key_column": "ticket_id",
+  "remove_dups_flag": "Y",
+  "remove_nulls_flag": "Y",
+  "remove_nulls_column" : ["ticket_id","customer_id","product_id"],
+  "trim_columns_flag":"Y",
+  "trim_columns": ["subject","message"],
+  "rules" : {
+    "valid_id" : "ticket_id IS NOT NULL ",
+    "valid_cust" : "customer_id is NOT NULL"
+  },
+  "quarantine_table" : "quarantine_table_tickets",
+  "clean_table_schema": "silver",
+  "clean_table": "tickets_silver",
+  "silver_writer_mode": "incremental",
+  "merge_columns" : ["ticket_id"]
+}

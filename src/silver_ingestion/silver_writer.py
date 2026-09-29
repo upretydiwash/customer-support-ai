@@ -6,6 +6,12 @@ class SilverTableWriter:
     def full_write(self,df, table_name):
         df.write.format('delta').mode("overwrite").saveAsTable(table_name)
 
+
+    #append mode write
+
+    def append_write(self,df, table_name):
+        df.write.format('delta').mode("append").saveAsTable(table_name)
+
     #incremental load write
     def incremental_write(self,tmp_view, target_table, merge_column):
         merge_column = "AND".join([f"s.{c} = t.{c}" for c in merge_column])
