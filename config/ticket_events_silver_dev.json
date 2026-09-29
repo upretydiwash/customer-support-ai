@@ -1,0 +1,20 @@
+{
+  "workspace": "dev",
+  "catalog":"development",
+  "source_schema": "bronze",
+  "source_table": "ticket_events_bronze",
+  "key_column": "event_id",
+  "remove_dups_flag": "Y",
+  "remove_nulls_flag": "Y",
+  "remove_nulls_column" : ["event_id","ticket_id"],
+  "trim_columns_flag":"Y",
+  "trim_columns": ["event_type"],
+  "rules" : {
+    "valid_id" : "event_id IS NOT NULL ",
+    "valid_ticket" : "ticket_id IS NOT NULL "
+  },
+  "quarantine_table" : "quarantine_table_ticket_events",
+  "clean_table_schema": "silver",
+  "clean_table": "ticket_events_silver",
+  "silver_writer_mode": "append"
+  }
