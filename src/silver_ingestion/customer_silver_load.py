@@ -70,8 +70,8 @@ if __name__ == "__main__":
                 try:
                     DataCheck = DataQualityPipeline(incremental_df, target_quarantine_table, rules)
                     df_clean, df_quarantine = DataCheck.data_quality()
-                    print(f'{df_clean.count()} passed the data checks.')
-                    print(f'{df_quarantine.count()} failed the data checks.')
+                    #print(f'{df_clean.count()} passed the data checks.')
+                    #print(f'{df_quarantine.count()} failed the data checks.')
                 except Exception as e:
                     raise Exception(f'Error running data quality checks: {e}')
                 #transformation layer
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                 try:
                     if remove_dups_flag == 'Y':
                         df_removed_dups = Transformations.remove_duplicates(df_clean, key_column)
-                        print(f'Removed {df_clean.count() - df_removed_dups.count()} dupliucations from {source_data_table}')
+                        #print(f'Removed {df_clean.count() - df_removed_dups.count()} dupliucations from {source_data_table}')
 
                     else:
                         df_removed_dups = df_clean
@@ -90,7 +90,7 @@ if __name__ == "__main__":
                 try:
                     if remove_nulls_flag == 'Y':
                         df_removed_nulls = Transformations.remove_nulls(df_removed_dups, remove_nulls_column)
-                        print(f'Removed {df_removed_dups.count() - df_removed_nulls.count()} nulls from {source_data_table}')
+                        #print(f'Removed {df_removed_dups.count() - df_removed_nulls.count()} nulls from {source_data_table}')
 
                     else:
                         df_removed_nulls = df_removed_dups
