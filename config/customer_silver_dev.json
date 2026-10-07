@@ -10,8 +10,7 @@
   "trim_columns_flag":"Y",
   "trim_columns": ["customer_name","province"],
   "rules" : {
-    "valid_id" : "customer_id IS NOT NULL ",
-    "valid_age" : "age > 24"
+    "valid_id" : "customer_id IS NOT NULL "
   },
   "quarantine_table" : "quarantine_table",
   "clean_table_schema": "silver",

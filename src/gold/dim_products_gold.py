@@ -6,7 +6,7 @@ def run_spark_session():
     spark = SparkSession.builder.appName("dim_products_gold_job").getOrCreate()
     return spark
 
-def create_cusomer_gold(spark, environment):
+def create_products_gold(spark, environment):
     create_view_query = f'''
     CREATE TABLE IF NOT EXISTS {environment}.gold.dim_products_gold AS
 SELECT
@@ -33,10 +33,10 @@ def main():
     environment = sys.argv[1]
     if environment:
         print(f'Running in env: {environment}')
-        create_cusomer_gold(spark, environment)
+        create_products_gold(spark, environment)
     else:
         print('No environment provided, running in default')
-        create_cusomer_gold(spark, 'default')
+        create_products_gold(spark, 'default')
     return
     
 if __name__ == "__main__":
