@@ -52,7 +52,7 @@ def main():
         create_tickets_gold(spark, environment)
     else:
         print('No environment provided, running in default')
-        create_tickets_gold(spark, 'default')
+        create_tickets_gold(spark, 'development')
     return
     
 if __name__ == "__main__":

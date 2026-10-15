@@ -37,7 +37,7 @@ def main():
         create_cusomer_gold(spark, environment)
     else:
         print('No environment provided, running in default')
-        create_cusomer_gold(spark, 'default')
+        create_cusomer_gold(spark, 'development')
     return
     
 if __name__ == "__main__":

@@ -36,7 +36,7 @@ def main():
         create_products_gold(spark, environment)
     else:
         print('No environment provided, running in default')
-        create_products_gold(spark, 'default')
+        create_products_gold(spark, 'development')
     return
     
 if __name__ == "__main__":
